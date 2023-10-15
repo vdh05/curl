@@ -51,7 +51,7 @@ env:
   wolfssl-version: master
   nghttp3-version: v1.0.0
   ngtcp2-version: v1.0.0
-  nghttp2-version: v1.56.0
+  nghttp2-version: v1.57.0
   mod_h2-version: v2.0.21
 
 jobs:
