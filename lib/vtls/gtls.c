@@ -460,45 +460,43 @@ CURLcode gtls_client_init(struct Curl_easy *data,
   }
 #endif
 
-  if(ssl_config->native_ca_store)
-    /* this ignores errors on purpose */
-    gnutls_certificate_set_x509_system_trust(gtls->cred);
+  if(config->verifypeer) {
+    if(ssl_config->native_ca_store)
+      /* this ignores errors on purpose */
+      gnutls_certificate_set_x509_system_trust(gtls->cred);
 
-  if(config->CAfile) {
-    /* set the trusted CA cert bundle file */
-    gnutls_certificate_set_verify_flags(gtls->cred,
-                                        GNUTLS_VERIFY_ALLOW_X509_V1_CA_CRT);
+    if(config->CAfile) {
+      /* set the trusted CA cert bundle file */
+      gnutls_certificate_set_verify_flags(gtls->cred,
+                                          GNUTLS_VERIFY_ALLOW_X509_V1_CA_CRT);
 
-    rc = gnutls_certificate_set_x509_trust_file(gtls->cred,
-                                                config->CAfile,
-                                                GNUTLS_X509_FMT_PEM);
-    if(rc < 0) {
-      infof(data, "error reading ca cert file %s (%s)",
-            config->CAfile, gnutls_strerror(rc));
-      if(config->verifypeer) {
+      rc = gnutls_certificate_set_x509_trust_file(gtls->cred,
+                                                  config->CAfile,
+                                                  GNUTLS_X509_FMT_PEM);
+      if(rc < 0) {
+        infof(data, "error reading ca cert file %s (%s)",
+              config->CAfile, gnutls_strerror(rc));
         *pverifyresult = rc;
         return CURLE_SSL_CACERT_BADFILE;
       }
+      else
+        infof(data, "found %d certificates in %s", rc, config->CAfile);
     }
-    else
-      infof(data, "found %d certificates in %s", rc, config->CAfile);
-  }
 
-  if(config->CApath) {
-    /* set the trusted CA cert directory */
-    rc = gnutls_certificate_set_x509_trust_dir(gtls->cred,
-                                               config->CApath,
-                                               GNUTLS_X509_FMT_PEM);
-    if(rc < 0) {
-      infof(data, "error reading ca cert file %s (%s)",
-            config->CApath, gnutls_strerror(rc));
-      if(config->verifypeer) {
+    if(config->CApath) {
+      /* set the trusted CA cert directory */
+      rc = gnutls_certificate_set_x509_trust_dir(gtls->cred,
+                                                 config->CApath,
+                                                 GNUTLS_X509_FMT_PEM);
+      if(rc < 0) {
+        infof(data, "error reading ca cert file %s (%s)",
+              config->CApath, gnutls_strerror(rc));
         *pverifyresult = rc;
         return CURLE_SSL_CACERT_BADFILE;
       }
+      else
+        infof(data, "found %d certificates in %s", rc, config->CApath);
     }
-    else
-      infof(data, "found %d certificates in %s", rc, config->CApath);
   }
 
   if(config->CRLfile) {
