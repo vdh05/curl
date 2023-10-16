@@ -497,13 +497,11 @@ CURLcode gtls_client_init(struct Curl_easy *data,
       infof(data, "found %d certificates in %s", rc, config->CApath);
   }
 
-#ifdef CURL_CA_FALLBACK
-  /* use system ca certificate store as fallback */
-  if(config->verifypeer && !(config->CAfile || config->CApath)) {
+  /* use system ca certificate store if no paths are set */
+  if(config->verifypeer && !config->CAfile& !config->CApath &&
+     data->set.ssl.native_ca_store)
     /* this ignores errors on purpose */
     gnutls_certificate_set_x509_system_trust(gtls->cred);
-  }
-#endif
 
   if(config->CRLfile) {
     /* set the CRL list file */
