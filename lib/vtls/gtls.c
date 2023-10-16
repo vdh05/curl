@@ -460,6 +460,10 @@ CURLcode gtls_client_init(struct Curl_easy *data,
   }
 #endif
 
+  if(ssl_config->native_ca_store)
+    /* this ignores errors on purpose */
+    gnutls_certificate_set_x509_system_trust(gtls->cred);
+
   if(config->CAfile) {
     /* set the trusted CA cert bundle file */
     gnutls_certificate_set_verify_flags(gtls->cred,
@@ -496,12 +500,6 @@ CURLcode gtls_client_init(struct Curl_easy *data,
     else
       infof(data, "found %d certificates in %s", rc, config->CApath);
   }
-
-  /* use system ca certificate store if no paths are set */
-  if(config->verifypeer && !config->CAfile& !config->CApath &&
-     data->set.ssl.native_ca_store)
-    /* this ignores errors on purpose */
-    gnutls_certificate_set_x509_system_trust(gtls->cred);
 
   if(config->CRLfile) {
     /* set the CRL list file */
