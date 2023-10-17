@@ -1320,7 +1320,7 @@ static void resolve_info(struct Curl_easy *data,
     infof(data, "IPv4: %s", Curl_dyn_ptr(&out[0]));
 fail:
   Curl_dyn_free(&out[0]);
-  Curl_dyn_free(&out[0]);
+  Curl_dyn_free(&out[1]);
 }
 #else
 #define resolve_info(x,y)
