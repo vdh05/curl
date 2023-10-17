@@ -461,13 +461,18 @@ CURLcode gtls_client_init(struct Curl_easy *data,
 #endif
 
   if(config->verifypeer) {
+    bool imported_native_ca = false;
+
     if(ssl_config->native_ca_store) {
       rc = gnutls_certificate_set_x509_system_trust(gtls->cred);
       if(rc < 0)
         infof(data, "error reading native ca store (%s), continuing anyway",
               gnutls_strerror(rc));
-      else
+      else {
         infof(data, "found %d certificates in native ca store", rc);
+        if(rc > 0)
+          imported_native_ca = true;
+      }
     }
 
     if(config->CAfile) {
@@ -479,10 +484,13 @@ CURLcode gtls_client_init(struct Curl_easy *data,
                                                   config->CAfile,
                                                   GNUTLS_X509_FMT_PEM);
       if(rc < 0) {
-        infof(data, "error reading ca cert file %s (%s)",
-              config->CAfile, gnutls_strerror(rc));
-        *pverifyresult = rc;
-        return CURLE_SSL_CACERT_BADFILE;
+        infof(data, "error reading ca cert file %s (%s)%s",
+              config->CAfile, gnutls_strerror(rc),
+              (imported_native_ca ? ", continuing anyway" : ""));
+        if(!imported_native_ca) {
+          *pverifyresult = rc;
+          return CURLE_SSL_CACERT_BADFILE;
+        }
       }
       else
         infof(data, "found %d certificates in %s", rc, config->CAfile);
@@ -494,10 +502,13 @@ CURLcode gtls_client_init(struct Curl_easy *data,
                                                  config->CApath,
                                                  GNUTLS_X509_FMT_PEM);
       if(rc < 0) {
-        infof(data, "error reading ca cert file %s (%s)",
-              config->CApath, gnutls_strerror(rc));
-        *pverifyresult = rc;
-        return CURLE_SSL_CACERT_BADFILE;
+        infof(data, "error reading ca cert file %s (%s)%s",
+              config->CApath, gnutls_strerror(rc),
+              (imported_native_ca ? ", continuing anyway" : ""));
+        if(!imported_native_ca) {
+          *pverifyresult = rc;
+          return CURLE_SSL_CACERT_BADFILE;
+        }
       }
       else
         infof(data, "found %d certificates in %s", rc, config->CApath);
