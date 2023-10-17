@@ -504,11 +504,18 @@ Curl_cache_addr(struct Curl_easy *data,
   time(&dns->timestamp);
   if(dns->timestamp == 0)
     dns->timestamp = 1;   /* zero indicates permanent CURLOPT_RESOLVE entry */
+  dns->hostport = port;
+  dns->hostname = strdup(hostname);
+  if(!dns->hostname) {
+    free(dns);
+    return NULL;
+  }
 
   /* Store the resolved data in our DNS cache. */
   dns2 = Curl_hash_add(data->dns.hostcache, entry_id, entry_len + 1,
                        (void *)dns);
   if(!dns2) {
+    free(dns->hostname);
     free(dns);
     return NULL;
   }
@@ -1306,7 +1313,7 @@ static void show_resolve_info(struct Curl_easy *data,
   Curl_dyn_init(&out[0], 1024);
   Curl_dyn_init(&out[1], 1024);
   a = dns->addr;
-  infof(data, "List of addresses to try, in this order:");
+  infof(data, "Host %s:%d was resolved.", dns->hostname, dns->hostport);
   while(a) {
     if((a->ai_family == PF_INET6) || (a->ai_family == PF_INET)) {
       char buf[MAX_IPADR_LEN];
@@ -1323,10 +1330,10 @@ static void show_resolve_info(struct Curl_easy *data,
     }
     a = a->ai_next;
   }
-  if(Curl_dyn_len(&out[1]))
-    infof(data, "IPv6: %s", Curl_dyn_ptr(&out[1]));
-  if(Curl_dyn_len(&out[0]))
-    infof(data, "IPv4: %s", Curl_dyn_ptr(&out[0]));
+  infof(data, "IPv6: %s",
+        (Curl_dyn_len(&out[1]) ? Curl_dyn_ptr(&out[1]) : "(none)"));
+  infof(data, "IPv4: %s",
+        (Curl_dyn_len(&out[0]) ? Curl_dyn_ptr(&out[0]) : "(none)"));
 fail:
   Curl_dyn_free(&out[0]);
   Curl_dyn_free(&out[1]);
