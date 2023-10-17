@@ -117,6 +117,13 @@
 
 static void freednsentry(void *freethis);
 
+#ifndef CURL_DISABLE_VERBOSE_STRINGS
+static void show_resolve_info(struct Curl_easy *data,
+                              struct Curl_dns_entry *dns);
+#else
+#define show_resolve_info(x,y) Curl_nop_stmt
+#endif
+
 /*
  * Curl_printable_address() stores a printable version of the 1st address
  * given in the 'ai' argument. The result will be stored in the buf that is
@@ -823,8 +830,10 @@ enum resolve_t Curl_resolv(struct Curl_easy *data,
       if(!dns)
         /* returned failure, bail out nicely */
         Curl_freeaddrinfo(addr);
-      else
+      else {
         rc = CURLRESOLV_RESOLVED;
+        show_resolve_info(data, dns);
+      }
     }
   }
 
@@ -1286,8 +1295,8 @@ err:
 }
 
 #ifndef CURL_DISABLE_VERBOSE_STRINGS
-static void resolve_info(struct Curl_easy *data,
-                         struct Curl_dns_entry *dns)
+static void show_resolve_info(struct Curl_easy *data,
+                              struct Curl_dns_entry *dns)
 {
   struct Curl_addrinfo *a;
   CURLcode result = CURLE_OK;
@@ -1322,8 +1331,6 @@ fail:
   Curl_dyn_free(&out[0]);
   Curl_dyn_free(&out[1]);
 }
-#else
-#define resolve_info(x,y)
 #endif
 
 CURLcode Curl_resolv_check(struct Curl_easy *data,
@@ -1342,7 +1349,7 @@ CURLcode Curl_resolv_check(struct Curl_easy *data,
 #endif
   result = Curl_resolver_is_resolved(data, dns);
   if(*dns)
-    resolve_info(data, *dns);
+    show_resolve_info(data, *dns);
   return result;
 }
 
