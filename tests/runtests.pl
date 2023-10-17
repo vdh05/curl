@@ -1766,7 +1766,8 @@ sub singletest {
     if($singletest_state{$runnerid} == ST_INIT) {
         my $logdir = getrunnerlogdir($runnerid);
         # first, remove all lingering log & lock files
-        if((!cleardir($logdir) || !cleardir("$logdir/$LOCKDIR"))
+        if(((!cleardir($logdir) || !cleardir("$logdir/$LOCKDIR"))
+            || (rand(1) > .99))  # 1% of the time
             && $clearlocks) {
             # On Windows, lock files can't be deleted when the process still
             # has them open, so kill those processes first

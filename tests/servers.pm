@@ -266,7 +266,9 @@ sub clearlocks {
     my $dir = $_[0];
     my $done = 0;
 
+    logmsg "CLEARLOCKS maybe\n";
     if(os_is_win()) {
+        logmsg "CLEARLOCKS\n";
         $dir = sys_native_abs_path($dir);
         $dir =~ s/\//\\\\/g;
         my $handle = "handle";
@@ -275,6 +277,7 @@ sub clearlocks {
         }
         if(checkcmd($handle)) {
             my @handles = `$handle $dir -accepteula -nobanner`;
+            logmsg "CLEARLOCKS got " . scalar(@handles) . " handles [" . join(";", @handles) . "]\n";
             for my $tryhandle (@handles) {
                 if($tryhandle =~ /^(\S+)\s+pid:\s+(\d+)\s+type:\s+(\w+)\s+([0-9A-F]+):\s+(.+)\r\r/) {
                     logmsg "Found $3 lock of '$5' ($4) by $1 ($2)\n";
