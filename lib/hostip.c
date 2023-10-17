@@ -1314,13 +1314,19 @@ static void show_resolve_info(struct Curl_easy *data,
 #endif
   DEBUGASSERT(data);
   DEBUGASSERT(dns);
+
+  if(!data->set.verbose)
+    return;
+
+  infof(data, "Host %s:%d was resolved.",
+        (dns->hostname ? dns->hostname : "(unknown)"), dns->hostport);
+
   Curl_dyn_init(&out[0], 1024);
 #ifdef CURLRES_IPV6
   Curl_dyn_init(&out[1], 1024);
 #endif
+
   a = dns->addr;
-  infof(data, "Host %s:%d was resolved.",
-        (dns->hostname ? dns->hostname : "(unknown)"), dns->hostport);
   while(a) {
     if(
 #ifdef CURLRES_IPV6
@@ -1341,12 +1347,14 @@ static void show_resolve_info(struct Curl_easy *data,
     }
     a = a->ai_next;
   }
+
 #ifdef CURLRES_IPV6
   infof(data, "IPv6: %s",
         (Curl_dyn_len(&out[1]) ? Curl_dyn_ptr(&out[1]) : "(none)"));
 #endif
   infof(data, "IPv4: %s",
         (Curl_dyn_len(&out[0]) ? Curl_dyn_ptr(&out[0]) : "(none)"));
+
 fail:
   Curl_dyn_free(&out[0]);
 #ifdef CURLRES_IPV6
