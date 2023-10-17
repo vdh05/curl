@@ -1285,18 +1285,65 @@ err:
   return CURLE_OK;
 }
 
+#ifndef CURL_DISABLE_VERBOSE_STRINGS
+static void resolve_info(struct Curl_easy *data,
+                         struct Curl_dns_entry *dns)
+{
+  struct Curl_addrinfo *a;
+  CURLcode result = CURLE_OK;
+  struct dynbuf out[2];
+  DEBUGASSERT(data);
+  DEBUGASSERT(dns);
+  Curl_dyn_init(&out[0], 1024);
+  Curl_dyn_init(&out[1], 1024);
+  a = dns->addr;
+  infof(data, "List of addresses to try, in this order:");
+  while(a) {
+    if((a->ai_family == PF_INET6) || (a->ai_family == PF_INET)) {
+      char buf[MAX_IPADR_LEN];
+      struct dynbuf *d = &out[(a->ai_family == PF_INET6)];
+      Curl_printable_address(a, buf, sizeof(buf));
+      if(Curl_dyn_len(d))
+        result = Curl_dyn_addn(d, ", ", 2);
+      if(!result)
+        result = Curl_dyn_add(d, buf);
+      if(result) {
+        infof(data, "too many IP, can't show");
+        goto fail;
+      }
+    }
+    a = a->ai_next;
+  }
+  if(Curl_dyn_len(&out[1]))
+    infof(data, "IPv6: %s", Curl_dyn_ptr(&out[1]));
+  if(Curl_dyn_len(&out[0]))
+    infof(data, "IPv4: %s", Curl_dyn_ptr(&out[0]));
+fail:
+  Curl_dyn_free(&out[0]);
+  Curl_dyn_free(&out[0]);
+}
+#else
+#define resolve_info(x,y)
+#endif
+
 CURLcode Curl_resolv_check(struct Curl_easy *data,
                            struct Curl_dns_entry **dns)
 {
+  CURLcode result;
 #if defined(CURL_DISABLE_DOH) && !defined(CURLRES_ASYNCH)
   (void)data;
   (void)dns;
 #endif
 #ifndef CURL_DISABLE_DOH
-  if(data->conn->bits.doh)
-    return Curl_doh_is_resolved(data, dns);
+  if(data->conn->bits.doh) {
+    result = Curl_doh_is_resolved(data, dns);
+  }
+  else
 #endif
-  return Curl_resolver_is_resolved(data, dns);
+  result = Curl_resolver_is_resolved(data, dns);
+  if(*dns)
+    resolve_info(data, *dns);
+  return result;
 }
 
 int Curl_resolv_getsock(struct Curl_easy *data,
