@@ -461,9 +461,14 @@ CURLcode gtls_client_init(struct Curl_easy *data,
 #endif
 
   if(config->verifypeer) {
-    if(ssl_config->native_ca_store)
-      /* this ignores errors on purpose */
-      gnutls_certificate_set_x509_system_trust(gtls->cred);
+    if(ssl_config->native_ca_store) {
+      rc = gnutls_certificate_set_x509_system_trust(gtls->cred);
+      if(rc < 0)
+        infof(data, "error reading native ca store (%s), continuing anyway",
+              gnutls_strerror(rc));
+      else
+        infof(data, "found %d certificates in native ca store", rc);
+    }
 
     if(config->CAfile) {
       /* set the trusted CA cert bundle file */
