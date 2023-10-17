@@ -1313,7 +1313,8 @@ static void show_resolve_info(struct Curl_easy *data,
   Curl_dyn_init(&out[0], 1024);
   Curl_dyn_init(&out[1], 1024);
   a = dns->addr;
-  infof(data, "Host %s:%d was resolved.", dns->hostname, dns->hostport);
+  infof(data, "Host %s:%d was resolved.",
+        (dns->hostname ? dns->hostname : "(unknown)"), dns->hostport);
   while(a) {
     if((a->ai_family == PF_INET6) || (a->ai_family == PF_INET)) {
       char buf[MAX_IPADR_LEN];
