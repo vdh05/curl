@@ -507,10 +507,8 @@ Curl_cache_addr(struct Curl_easy *data,
   if(dns->timestamp == 0)
     dns->timestamp = 1;   /* zero indicates permanent CURLOPT_RESOLVE entry */
   dns->hostport = port;
-  if(hostlen) {
-    memcpy(dns->hostname, hostname, hostlen);
-    dns->hostname[hostlen] = 0;
-  }
+  if(hostlen)
+    strcpy(dns->hostname, hostname);
 
   /* Store the resolved data in our DNS cache. */
   dns2 = Curl_hash_add(data->dns.hostcache, entry_id, entry_len + 1,
