@@ -60,14 +60,14 @@ struct Curl_hash *Curl_global_host_cache_init(void);
 
 struct Curl_dns_entry {
   struct Curl_addrinfo *addr;
-  /* hostname that resolved to addr. may be NULL (unix domain sockets). */
-  char *hostname;
-  /* hostname port number that resolved to addr. */
-  int hostport;
   /* timestamp == 0 -- permanent CURLOPT_RESOLVE entry (doesn't time out) */
   time_t timestamp;
   /* use-counter, use Curl_resolv_unlock to release reference */
   long inuse;
+  /* hostname port number that resolved to addr. */
+  int hostport;
+  /* hostname that resolved to addr. may be NULL (unix domain sockets). */
+  char hostname[1];
 };
 
 bool Curl_host_is_ipnum(const char *hostname);

@@ -488,9 +488,11 @@ Curl_cache_addr(struct Curl_easy *data,
       return NULL;
   }
 #endif
+  if(!hostlen)
+    hostlen = strlen(hostname);
 
   /* Create a new cache entry */
-  dns = calloc(1, sizeof(struct Curl_dns_entry));
+  dns = calloc(1, sizeof(struct Curl_dns_entry) + hostlen);
   if(!dns) {
     return NULL;
   }
@@ -505,17 +507,15 @@ Curl_cache_addr(struct Curl_easy *data,
   if(dns->timestamp == 0)
     dns->timestamp = 1;   /* zero indicates permanent CURLOPT_RESOLVE entry */
   dns->hostport = port;
-  dns->hostname = strdup(hostname);
-  if(!dns->hostname) {
-    free(dns);
-    return NULL;
+  if(hostlen) {
+    memcpy(dns->hostname, hostname, hostlen);
+    dns->hostname[hostlen] = 0;
   }
 
   /* Store the resolved data in our DNS cache. */
   dns2 = Curl_hash_add(data->dns.hostcache, entry_id, entry_len + 1,
                        (void *)dns);
   if(!dns2) {
-    free(dns->hostname);
     free(dns);
     return NULL;
   }
@@ -1319,7 +1319,7 @@ static void show_resolve_info(struct Curl_easy *data,
     return;
 
   infof(data, "Host %s:%d was resolved.",
-        (dns->hostname ? dns->hostname : "(unknown)"), dns->hostport);
+        (dns->hostname[0] ? dns->hostname : "(none)"), dns->hostport);
 
   Curl_dyn_init(&out[0], 1024);
 #ifdef CURLRES_IPV6
